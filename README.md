@@ -21,14 +21,14 @@ Avant de commencer, assure-toi d’avoir installé :
 ### Installation du Backend (Laravel)
 
 
-cd backend
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan serve
+- cd backend
+- composer install
+- cp .env.example .env
+- php artisan key:generate
+- php artisan serve
 
 ### Installation du Frontend (React + Vite + TypeScript + TailwindCSS)
 
-cd frontend
-npm install
-npm run dev
+- cd frontend
+- npm install
+- npm run dev
