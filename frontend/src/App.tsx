@@ -1,24 +1,28 @@
-import { useState } from "react";
+// App.tsx
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import CreateEditRoom from "./pages/admin/rooms/CreateEditRoom";
+import CreateHotel from "./pages/admin/hotels/CreateHotel";
+import RoomAvailabilityManager from "./pages/admin/rooms/RoomAvailability";
 
 function App() {
-  const [count, setCount] = useState(0);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
-      <h1 className="text-3xl font-bold mb-4">Vite + React + TailwindCSS</h1>
-      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <button
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+    <Router>
+      <div className="min-h-screen bg-gray-100">
+        {/* Vous pourriez avoir un Header/Navbar ici */}
+        <main>
+          <Routes>
+            <Route path="/hotels" element={<CreateHotel />} />
+            <Route path="/rooms" element={<CreateEditRoom />} />
+            <Route
+              path="/rooms/availability"
+              element={<RoomAvailabilityManager />}
+            />
+          </Routes>
+        </main>
       </div>
-      <p className="mt-4 text-sm">
-        Edit <code className="bg-gray-200 px-1 rounded">src/App.tsx</code> and
-        save to test HMR
-      </p>
-    </div>
+    </Router>
   );
 }
 
