@@ -1,12 +1,12 @@
 # Hotel Booking - Gestion des Réservations
 
-**Hotel Booking** est une application de gestion des réservations d’hôtels, construite avec **Laravel 12** pour le backend et **React (Vite + TypeScript + TailwindCSS)** pour le frontend.
+**Hotel Booking** est une application de gestion des réservations d’hôtels, construite avec **Node.js (Express)** pour le backend et **React (Vite + TypeScript + TailwindCSS)** pour le frontend.
 
 ## Technologies Utilisées
 
-- **Backend** : Laravel 12, MySQL, PHP 8+
+- **Backend** : Node.js, Express, MySQL, Sequelize
 - **Frontend** : React 19, Vite, TypeScript, TailwindCSS
-- **Autres** : Inertia.js, Zustand, React Router
+- **Autres** : Zustand, React Router, JWT, bcryptjs
 
 ## Installation et Configuration
 
@@ -14,7 +14,6 @@
 
 Avant de commencer, assure-toi d’avoir installé :
 
-- **PHP 8+**, **Composer**
 - **Node.js 18+**, **npm**
 - **MySQL**
   
@@ -22,10 +21,9 @@ Avant de commencer, assure-toi d’avoir installé :
 
 
 - cd backend
-- composer install
+- npm install
 - cp .env.example .env
-- php artisan key:generate
-- php artisan serve
+- npm run dev
 
 ### Installation du Frontend (React + Vite + TypeScript + TailwindCSS)
 
