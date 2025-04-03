@@ -1,4 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
+import { sequelize } from '../config/database.js';
 
 export default class User extends Model {
   static associate(models) {
@@ -33,27 +34,14 @@ User.init({
     type: DataTypes.STRING(100),
     allowNull: false,
   },
-  phone_number: {
-    type: DataTypes.STRING(20),
+  sexe: {
+    type: DataTypes.ENUM('Masculin', 'Féminin'),
     allowNull: false,
   },
-  profile_picture: {
-    type: DataTypes.STRING(255),
+  role: {
+    type: DataTypes.ENUM('admin', 'simple-user'),
     allowNull: false,
-  },
-  email_verified: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false
-  },
-  preferred_language: {
-    type: DataTypes.STRING(10),
-    allowNull: false,
-    defaultValue: 'fr'
-  },
-  deleted_at: {
-    type: DataTypes.DATE,
-    allowNull: true
+    defaultValue: 'simple-user'
   }
 }, {
   sequelize,

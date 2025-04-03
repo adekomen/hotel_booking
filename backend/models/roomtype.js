@@ -1,4 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
+import { sequelize } from '../config/database.js';
 
 export default class RoomType extends Model {
   static associate(models) {

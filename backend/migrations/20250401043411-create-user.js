@@ -27,34 +27,24 @@ export default {
         type: Sequelize.STRING(100),
         allowNull: false,
       },
-      phone_number: {
-        type: Sequelize.STRING(20),
+      sexe: {
+        type: Sequelize.ENUM('Masculin', 'Féminin'),
         allowNull: false,
       },
-      profile_picture: {
-        type: Sequelize.STRING(255),
+      role: {
+        type: Sequelize.ENUM('admin', 'simple-user'),
         allowNull: false,
-      },
-      email_verified: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false,
-      },
-      preferred_language: {
-        type: Sequelize.STRING(10),
-        allowNull: false,
-      },
-      deleted_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
+        defaultValue: 'simple-user'
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
       }
     });
   },
