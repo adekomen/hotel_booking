@@ -1,31 +1,37 @@
-import { Model, DataTypes } from 'sequelize';
-import { sequelize } from '../config/database.js';
+'use strict';
+const { Model, DataTypes } = require('sequelize');
 
-export default class HotelImage extends Model {
-  static associate(models) {
-    HotelImage.belongsTo(models.Hotel, {
-      foreignKey: 'hotel_id',
-      as: 'hotel'
-    });
+module.exports = (sequelize) => {
+  class HotelImage extends Model {
+    static associate(models) {
+      HotelImage.belongsTo(models.Hotel, {
+        foreignKey: 'hotel_id',
+        as: 'hotel'
+      });
+    }
   }
-}
 
-HotelImage.init({
-  hotel_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  image_url: {
-    type: DataTypes.STRING(255),
-    allowNull: false
-  },
-  is_primary: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  }
-}, {
-  sequelize,
-  modelName: 'HotelImage',
-});
+  HotelImage.init({
+    hotel_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    image_url: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+    is_primary: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    }
+  }, {
+    sequelize,
+    modelName: 'HotelImage',
+    tableName: 'hotel_images',
+    underscored: true,
+    timestamps: true
+  });
 
-export { HotelImage };
+  return HotelImage;
+};

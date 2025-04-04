@@ -1,15 +1,13 @@
-import { validationResult } from "express-validator";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import User from "../models/user.js";
-import dotenv from "dotenv";
-
-dotenv.config();
+const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { User } = require('../models');
+require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret_key";
 
 /* Partie Register */
-export const register = async (req, res) => {
+const register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -45,7 +43,7 @@ export const register = async (req, res) => {
 };
 
 /* Partie Login */
-export const login = async (req, res) => {
+const login = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -57,12 +55,12 @@ export const login = async (req, res) => {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      return res.status(401).json({ message: "Email ou mot de passe incorrect." });
+      return res.status(400).json({ message: "Email ou mot de passe incorrect." });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Email ou mot de passe incorrect." });
+      return res.status(400).json({ message: "Email ou mot de passe incorrect." });
     }
 
     // On génère un token JWT avec une durée d'expiration de 2 heures
@@ -98,3 +96,5 @@ export const login = async (req, res) => {
     });
   }
 };
+
+module.exports = { register, login };

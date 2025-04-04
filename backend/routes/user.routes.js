@@ -1,5 +1,6 @@
-import { Router } from "express";
-import { authenticate, checkRole } from "../middlewares/authMiddleware.js";
+// user.routes.js
+const { Router } = require('express');
+const { authenticate, checkRole } = require('../middlewares/authMiddleware');
 
 const router = Router();
 
@@ -10,4 +11,4 @@ router.get("/user/profile", authenticate, checkRole("simple-user"), (req, res) =
   });
 });
 
-export default router;
+module.exports = router;

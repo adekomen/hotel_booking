@@ -1,10 +1,8 @@
 'use strict';
-/** @type {import('sequelize-cli').Migration} */
-import { Sequelize } from 'sequelize';
 
-export default {
-  async up(queryInterface) {
-    await queryInterface.createTable('Reviews', {
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable('reviews', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -15,15 +13,16 @@ export default {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Users',
+          model: 'users',
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE'
       },
       hotel_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Hotels',
+          model: 'hotels',
           key: 'id'
         },
         onDelete: 'CASCADE'
@@ -32,34 +31,33 @@ export default {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
-          model: 'Bookings',
+          model: 'bookings',
           key: 'id'
-        }
+        },
+        onDelete: 'SET NULL'
       },
       rating: {
         type: Sequelize.INTEGER,
-        allowNull: false,
-        validate: {
-          min: 1,
-          max: 5
-        }
+        allowNull: false
       },
       comment: {
         type: Sequelize.TEXT,
         allowNull: true
       },
-      createdAt: {
+      created_at: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-      updatedAt: {
+      updated_at: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('Reviews');
+    await queryInterface.dropTable('reviews');
   }
 };

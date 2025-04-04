@@ -1,9 +1,8 @@
-import { Sequelize } from 'sequelize';
+'use strict';
 
-/** @type {import('sequelize-cli').Migration} */
-export default {
-  async up(queryInterface) {
-    await queryInterface.createTable('Rooms', {
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable('rooms', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -14,7 +13,7 @@ export default {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Hotels',
+          model: 'hotels',
           key: 'id'
         },
         onDelete: 'CASCADE'
@@ -23,12 +22,13 @@ export default {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'RoomTypes',
+          model: 'room_types',
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE'
       },
       room_number: {
-        type: Sequelize.STRING(255),
+        type: Sequelize.STRING(20),
         allowNull: false
       },
       floor: {
@@ -55,17 +55,20 @@ export default {
         allowNull: false,
         defaultValue: false
       },
-      createdAt: {
+      created_at: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-      updatedAt: {
+      updated_at: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },
-  async down(queryInterface) {
-    await queryInterface.dropTable('Rooms');
+
+  async down(queryInterface, Sequelize) {
+    await queryInterface.dropTable('rooms');
   }
 };

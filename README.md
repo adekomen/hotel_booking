@@ -23,8 +23,8 @@ Avant de commencer, assure-toi d’avoir installé :
 - npm install
 - cp .env.example .env
 - Adapter le fichier .env à votre configuration personnelle de mysql
-- npm run dev
 - Assurer vous d'avoir créer la base de données (hotel_booking)
+- npm run dev
 - npx sequelize db:migrate (pour éxécuter les migrations)
 
 ### Installation du Frontend (React + Vite + TypeScript + TailwindCSS)

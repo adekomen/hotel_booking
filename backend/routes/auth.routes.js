@@ -1,6 +1,7 @@
-import { Router } from "express";
-import { body } from "express-validator";
-import { register, login } from "../controllers/authController.js";
+// auth.routes.js
+const { Router } = require('express');
+const { body } = require('express-validator');
+const { register, login } = require('../controllers/authController');
 
 const router = Router();
 
@@ -30,4 +31,4 @@ router.post("/register", registerValidation, register);
 
 router.post("/login", loginValidation, login);
 
-export default router;
+module.exports = router;

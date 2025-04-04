@@ -1,12 +1,10 @@
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-
-dotenv.config();
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret_key";
 
 /* Middleware d'authentification */
-export const authenticate = (req, res, next) => {
+const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -25,7 +23,7 @@ export const authenticate = (req, res, next) => {
 };
 
 /* Middleware pour vérifier le rôle */
-export const checkRole = (role) => {
+const checkRole = (role) => {
   return (req, res, next) => {
     if (req.user.role !== role) {
       return res.status(403).json({ message: "Accès refusé. Vous n'avez pas le droit d'accéder à cette ressource." });
@@ -33,3 +31,5 @@ export const checkRole = (role) => {
     next();
   };
 };
+
+module.exports = { authenticate, checkRole };

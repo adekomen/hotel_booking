@@ -1,10 +1,8 @@
 'use strict';
-/** @type {import('sequelize-cli').Migration} */
-import { Sequelize } from 'sequelize';
 
-export default {
-  async up(queryInterface) {
-    await queryInterface.createTable('HotelImages', {
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable('hotel_images', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -15,7 +13,7 @@ export default {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Hotels',
+          model: 'hotels',
           key: 'id'
         },
         onDelete: 'CASCADE'
@@ -26,20 +24,23 @@ export default {
       },
       is_primary: {
         type: Sequelize.BOOLEAN,
+        allowNull: false,
         defaultValue: false
       },
-      createdAt: {
+      created_at: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-      updatedAt: {
+      updated_at: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('HotelImages');
+    await queryInterface.dropTable('hotel_images');
   }
 };
