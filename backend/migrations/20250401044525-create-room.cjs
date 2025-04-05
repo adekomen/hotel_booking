@@ -1,60 +1,56 @@
-import { Sequelize } from 'sequelize';
+const { Sequelize } = require('sequelize');
 
 /** @type {import('sequelize-cli').Migration} */
-export default {
+module.exports =  {
   async up(queryInterface) {
-    await queryInterface.createTable('Hotels', {
+    await queryInterface.createTable('Rooms', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      name: {
-        type: Sequelize.STRING,
+      hotel_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Hotels',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
+      room_type_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'RoomTypes',
+          key: 'id'
+        }
+      },
+      room_number: {
+        type: Sequelize.STRING(255),
         allowNull: false
       },
-      description: {
-        type: Sequelize.TEXT,
-        allowNull: false
-      },
-      address: {
-        type: Sequelize.TEXT,
-        allowNull: false
-      },
-      city: {
-        type: Sequelize.STRING(100),
-        allowNull: false
-      },
-      country: {
-        type: Sequelize.STRING(100),
-        allowNull: false
-      },
-      star_rating: {
+      floor: {
         type: Sequelize.INTEGER,
         allowNull: false
       },
-      has_wifi: {
+      has_air_conditioning: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: false
       },
-      has_pool: {
+      has_tv: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: false
       },
-      has_restaurant: {
+      has_minibar: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: false
       },
-      has_parking: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-      },
-      has_gym: {
+      is_smoking_allowed: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: false
@@ -70,6 +66,6 @@ export default {
     });
   },
   async down(queryInterface) {
-    await queryInterface.dropTable('Hotels');
+    await queryInterface.dropTable('Rooms');
   }
 };

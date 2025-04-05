@@ -1,7 +1,9 @@
-import { Sequelize, DataTypes } from 'sequelize';
+const { Sequelize } = require('sequelize');
+const { DataTypes } = require('sequelize');
+
 
 /** @type {import('sequelize-cli').Migration} */
-export default {
+module.exports =  {
   async up(queryInterface) {
     await queryInterface.createTable('Bookings', {
       id: {

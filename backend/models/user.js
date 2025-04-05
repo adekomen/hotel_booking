@@ -1,6 +1,7 @@
+import { sequelize } from '../config/database.js'; 
 import { Model, DataTypes } from 'sequelize';
 
-export default class User extends Model {
+class User extends Model {
   static associate(models) {
     User.hasMany(models.Booking, {
       foreignKey: 'user_id',
@@ -59,3 +60,4 @@ User.init({
   sequelize,
   modelName: 'User',
 });
+export default User;

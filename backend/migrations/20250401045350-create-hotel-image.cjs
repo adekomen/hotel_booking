@@ -1,8 +1,7 @@
-'use strict';
+const { Sequelize } = require('sequelize');
 /** @type {import('sequelize-cli').Migration} */
-import { Sequelize } from 'sequelize';
 
-export default {
+module.exports =  {
   async up(queryInterface) {
     await queryInterface.createTable('HotelImages', {
       id: {

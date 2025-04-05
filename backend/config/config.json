@@ -1,6 +1,6 @@
 {
   "development": {
-    "username": "",
+    "username": "root",
     "password": "",
     "database": "hotel_booking",
     "host": "127.0.0.1",

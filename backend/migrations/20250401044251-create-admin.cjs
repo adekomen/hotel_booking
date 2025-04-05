@@ -1,7 +1,7 @@
-import { Sequelize } from 'sequelize';
+const { Sequelize } = require('sequelize');
 
 /** @type {import('sequelize-cli').Migration} */
-export default {
+module.exports = {
   async up(queryInterface) {
     await queryInterface.createTable('Admins', {
       id: {
