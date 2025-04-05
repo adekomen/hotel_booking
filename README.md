@@ -24,6 +24,8 @@ Avant de commencer, assure-toi d’avoir installé :
 - npm install
 - cp .env.example .env
 - npm run dev
+- adapter le fichier /config/config.json suivant vos identifiants mysql
+- npx sequelize db:migrate (pour éxécuter les migrations)
 
 ### Installation du Frontend (React + Vite + TypeScript + TailwindCSS)
 
