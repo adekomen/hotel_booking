@@ -30,6 +30,8 @@ export default tseslint.config({
   },
 })
 ```
+            <Route path="/global-footer" element={<GlobalFooter />} />
+
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
@@ -52,3 +54,10 @@ export default tseslint.config({
   },
 })
 ```
+npm i --save @fortawesome/fontawesome-svg-core
+npm i --save @fortawesome/react-fontawesome@latest
+npm install @fortawesome/fontawesome-svg-core @fortawesome/free-solid-svg-icons @fortawesome/react-fontawesome
+
+  <Route path="/" element={<GlobalSearch />} />
+          <Route path="/" element={<HotelCard />} />
+          <Route path="/" element={<NearbyHotels />} />
