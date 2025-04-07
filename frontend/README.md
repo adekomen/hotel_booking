@@ -58,6 +58,4 @@ npm i --save @fortawesome/fontawesome-svg-core
 npm i --save @fortawesome/react-fontawesome@latest
 npm install @fortawesome/fontawesome-svg-core @fortawesome/free-solid-svg-icons @fortawesome/react-fontawesome
 
-  <Route path="/" element={<GlobalSearch />} />
-          <Route path="/" element={<HotelCard />} />
-          <Route path="/" element={<NearbyHotels />} />
+  
