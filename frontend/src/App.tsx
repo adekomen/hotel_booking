@@ -1,11 +1,11 @@
+
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-// App.tsx
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import CreateEditRoom from "./pages/admin/rooms/CreateEditRoom";
 import RoomAvailabilityManager from "./pages/admin/rooms/RoomAvailability";
 import RoomTypeList from "./pages/admin/roomTypes/RoomTypeList";
