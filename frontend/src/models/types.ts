@@ -37,6 +37,8 @@ export interface RoomType {
   description?: string;
   basePrice: number;
   capacity: number;
+  images: string[]; 
+  amenities?: string[];
   createdAt: string;
 }
 
@@ -56,6 +58,8 @@ export interface Room {
 }
 
 export interface Booking {
+  guestCount: number;
+  totalAmount: number;
   id: number;
   userId: number;
   roomId: number;
@@ -64,12 +68,13 @@ export interface Booking {
   adults: number;
   children: number;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed';
+  status: "pending" | "confirmed" | "cancelled" | "completed";
+  paymentStatus: "pending" | "paid" | "refunded" | "failed";
   createdAt: string;
   updatedAt: string;
   user?: User;
   room?: Room;
+  guestName?: string;
 }
 
 export interface Favorite {

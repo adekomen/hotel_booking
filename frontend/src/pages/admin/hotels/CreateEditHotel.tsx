@@ -1,9 +1,12 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Hotel } from "../../../models/types";
 
-export default function CreateHotel() {
+export default function CreateEditHotel() {
   const navigate = useNavigate();
+  const { id } = useParams(); // Récupérer l'ID de l'URL si présent
+  const isEditMode = Boolean(id);
+
   const [hotel, setHotel] = useState<Partial<Hotel>>({
     name: "",
     description: "",
@@ -18,6 +21,23 @@ export default function CreateHotel() {
     hasGym: false,
   });
 
+  // Charger les données de l'hôtel existant si on est en mode édition
+  useEffect(() => {
+    if (isEditMode && id) {
+      const existingHotels = JSON.parse(localStorage.getItem("hotels") || "[]");
+      const hotelToEdit = existingHotels.find(
+        (h: Hotel) => h.id === parseInt(id, 10)
+      );
+
+      if (hotelToEdit) {
+        setHotel(hotelToEdit);
+      } else {
+        // Rediriger si l'hôtel n'existe pas
+        navigate("/admin/hotels");
+      }
+    }
+  }, [id, isEditMode, navigate]);
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -27,23 +47,71 @@ export default function CreateHotel() {
     const checked =
       type === "checkbox" ? (e.target as HTMLInputElement).checked : undefined;
 
-    setHotel({
-      ...hotel,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    if (name === "starRating") {
+      setHotel({
+        ...hotel,
+        [name]: value ? parseInt(value, 10) : undefined,
+      });
+    } else {
+      setHotel({
+        ...hotel,
+        [name]: type === "checkbox" ? checked : value,
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Quand l'API sera prête, on remplacera par un appel réel
-    console.log("Creating hotel:", hotel);
-    // Mock success
+
+    // Obtenir les hôtels existants depuis localStorage
+    const existingHotels = JSON.parse(localStorage.getItem("hotels") || "[]");
+
+    if (isEditMode) {
+      // Mise à jour d'un hôtel existant
+      const updatedHotel: Hotel = {
+        ...(hotel as Hotel),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const updatedHotels = existingHotels.map((h: Hotel) =>
+        h.id === updatedHotel.id ? updatedHotel : h
+      );
+
+      localStorage.setItem("hotels", JSON.stringify(updatedHotels));
+      console.log("Hotel updated:", updatedHotel);
+    } else {
+      // Création d'un nouvel hôtel
+      const newHotel: Hotel = {
+        id: Date.now(),
+        name: hotel.name || "",
+        address: hotel.address || "",
+        city: hotel.city || "",
+        country: hotel.country || "",
+        hasWifi: hotel.hasWifi || false,
+        hasPool: hotel.hasPool || false,
+        hasRestaurant: hotel.hasRestaurant || false,
+        hasParking: hotel.hasParking || false,
+        hasGym: hotel.hasGym || false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        description: hotel.description,
+        starRating: hotel.starRating,
+      };
+
+      const updatedHotels = [...existingHotels, newHotel];
+      localStorage.setItem("hotels", JSON.stringify(updatedHotels));
+      console.log("Hotel created:", newHotel);
+    }
+
+    // Naviguer vers la liste des hôtels
     navigate("/admin/hotels");
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Créer un nouvel hôtel</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        {isEditMode ? "Modifier l'hôtel" : "Créer un nouvel hôtel"}
+      </h1>
 
       <form
         onSubmit={handleSubmit}
@@ -61,7 +129,7 @@ export default function CreateHotel() {
             id="name"
             name="name"
             type="text"
-            value={hotel.name}
+            value={hotel.name || ""}
             onChange={handleChange}
             required
           />
@@ -151,7 +219,7 @@ export default function CreateHotel() {
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             id="starRating"
             name="starRating"
-            value={hotel.starRating || ""}
+            value={hotel.starRating?.toString() || ""}
             onChange={handleChange}
           >
             <option value="1">1 étoile</option>
@@ -235,7 +303,7 @@ export default function CreateHotel() {
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             type="submit"
           >
-            Créer l'hôtel
+            {isEditMode ? "Mettre à jour" : "Créer l'hôtel"}
           </button>
           <button
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
