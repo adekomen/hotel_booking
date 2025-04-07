@@ -111,7 +111,7 @@ const NearbyHotels: React.FC = () => {
                     <p className="text-lg font-bold">{hotel.price}</p>
                     <p className="text-sm text-gray-600">Par nuit</p>
                     <button className="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
-                      Book now
+                      Réserver
                     </button>
                   </div>
                 </div>

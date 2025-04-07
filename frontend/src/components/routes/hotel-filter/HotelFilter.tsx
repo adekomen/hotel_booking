@@ -30,33 +30,33 @@ const HotelsPage: React.FC = () => {
   const hotels: Hotel[] = [
     {
       id: '1',
-      name: 'Hyatt Pune',
-      location: 'Kalyani Nagar, Pune',
-      distance: '3.3 kms from city center',
+      name: 'Cotonou',
+      location: 'Sofitel, Cotonou',
+      distance: '1km du centre ville',
       features: [
-        'Free cancellation',
-        'No prepayment needed – pay at the property'
+        'Annulation gratuite ',
+        'c'
       ],
       rating: 5,
       type: 'Hotel',
-      image: 'https://source.unsplash.com/random/400x300/?hyatt',
-      price: '₹18,900'
+      image: 'https://s3.amazonaws.com/static-webstudio-accorhotels-usa-1.wp-ha.fastbooking.com/wp-content/uploads/sites/19/2022/03/09202519/DUF_8665-v-ok-1170x780.jpg',
+      price: '150.000F'
     },
     {
       id: '2',
-      name: 'Courtyard by Marriott Pune Hinjewadi',
-      location: '500 meters from the Rajiv Gandhi Infotech Park',
-      distance: '500 meters from center',
+      name: 'Hotel Béhanzin, Porto-Novo',
+      location: "500 mètre de l'Assemblée nationale",
+      distance: '5km du centre ville',
       features: [
-        'Free cancellation',
-        'No prepayment needed – pay at the property',
-        'Free wifi',
-        'Free lunch'
+        'Annulation gratuite',
+        'Pas de prépaiement nécessaire – paiement à la proriété',
+        'WIFI gratuit',
+        'déjeuner gratuit'
       ],
       rating: 4,
       type: 'Hotel',
-      image: 'https://source.unsplash.com/random/400x300/?marriott',
-      price: '₹25,300'
+      image: 'https://imgs.search.brave.com/rnM0KrEPestZmK5XZu8anEcZZ9T-C3boJyLhOQq7Mz4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvODQ0/MjUxMzIvcGhvdG8v/YnVyai1hbC1hcmFi/LWhvdGVsLWR1YmFp/LXVhZS5qcGc_cz02/MTJ4NjEyJnc9MCZr/PTIwJmM9bGZ2MFNt/RHFvaDE5OU1wcGFS/MHVGT19rNkhjaGQ4/QmpNd29MZUtiM0FW/Zz0',
+      price: '85.000'
     }
   ];
 
@@ -220,7 +220,7 @@ const HotelsPage: React.FC = () => {
                   <div className="mt-3 space-y-1">
                     {hotel.features.map((feature, index) => (
                       <div key={index} className="flex items-center">
-                        <span className="text-green-500 mr-2">✔</span>
+                        <span className="text-green-500 mr-2">✔</span>https://source.unsplash.com/random/400x300/?marriott
                         <span>{feature}</span>
                       </div>
                     ))}
@@ -233,9 +233,9 @@ const HotelsPage: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold">{hotel.price}</p>
-                      <p className="text-sm text-gray-600">per night</p>
+                      <p className="text-sm text-gray-600">Par nuit</p>
                       <button className="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
-                        Book now
+                        Réserver
                       </button>
                     </div>
                   </div>
