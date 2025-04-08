@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Room, RoomType, Hotel, RoomAvailability } from "../../../models/types";
+import { api, hotelService, roomService } from "../../../services/api";
 import {
   Bed,
   Filter,
@@ -60,67 +61,72 @@ export default function RoomList() {
   const [availabilities, setAvailabilities] = useState<
     Record<string, RoomAvailability[]>
   >({});
+  const [availabilityLoading, setAvailabilityLoading] = useState<
+    Record<number, boolean>
+  >({});
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const storedRoomTypes = JSON.parse(
-          localStorage.getItem("roomTypes") || "[]"
-        );
-        setRoomTypes(storedRoomTypes);
+        // Fetch room types from API
+        const response = await api.get("/room-types");
+        setRoomTypes(response.data);
 
         const allAvailabilities: Record<string, RoomAvailability[]> = {};
         const today = new Date();
         const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
 
         if (hotelId) {
-          const storedHotels = JSON.parse(
-            localStorage.getItem("hotels") || "[]"
-          );
-          const currentHotel = storedHotels.find(
-            (h: Hotel) => h.id === Number(hotelId)
-          );
-          setHotel(currentHotel || null);
+          // Fetch hotel details
+          const currentHotel = await hotelService.getHotelById(Number(hotelId));
+          setHotel(currentHotel);
 
-          const hotelRooms = JSON.parse(
-            localStorage.getItem(`hotelRooms_${hotelId}`) || "[]"
+          // Fetch rooms for this hotel
+          const hotelRooms = await roomService.getRoomsByHotelId(
+            Number(hotelId)
           );
           setRooms(hotelRooms);
 
-          hotelRooms.forEach((room: Room) => {
-            const storageKey = `roomAvailability_${room.id}_${currentMonth}`;
-            const storedAvailability = localStorage.getItem(storageKey);
-            if (storedAvailability) {
-              allAvailabilities[room.id] = JSON.parse(storedAvailability);
+          // Fetch availability for each room
+          for (const room of hotelRooms) {
+            try {
+              const availabilityData = await roomService.getRoomAvailability(
+                room.id,
+                currentMonth
+              );
+              allAvailabilities[room.id] = availabilityData;
+            } catch (error) {
+              console.error(
+                `Failed to fetch availability for room ${room.id}:`,
+                error
+              );
             }
-          });
+          }
         } else {
-          const storedHotels = JSON.parse(
-            localStorage.getItem("hotels") || "[]"
-          );
-          let allRooms: Room[] = [];
-
-          storedHotels.forEach((hotel: Hotel) => {
-            const hotelRooms = JSON.parse(
-              localStorage.getItem(`hotelRooms_${hotel.id}`) || "[]"
-            );
-            allRooms = [...allRooms, ...hotelRooms];
-
-            hotelRooms.forEach((room: Room) => {
-              const storageKey = `roomAvailability_${room.id}_${currentMonth}`;
-              const storedAvailability = localStorage.getItem(storageKey);
-              if (storedAvailability) {
-                allAvailabilities[room.id] = JSON.parse(storedAvailability);
-              }
-            });
-          });
-
+          // Fetch all rooms across all hotels
+          const allRooms = await roomService.getAllRooms();
           setRooms(allRooms);
+
+          // Fetch availability for each room
+          for (const room of allRooms) {
+            try {
+              const availabilityData = await roomService.getRoomAvailability(
+                room.id,
+                currentMonth
+              );
+              allAvailabilities[room.id] = availabilityData;
+            } catch (error) {
+              console.error(
+                `Failed to fetch availability for room ${room.id}:`,
+                error
+              );
+            }
+          }
         }
 
         setAvailabilities(allAvailabilities);
       } catch (error) {
-        console.error("Erreur lors du chargement:", error);
+        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
@@ -154,47 +160,51 @@ export default function RoomList() {
     };
   };
 
-  const toggleRoomAvailability = (
+  const toggleRoomAvailability = async (
     roomId: number,
     date: string,
     isAvailable: boolean
   ) => {
-    const currentMonth = date.substring(0, 7);
-    const storageKey = `roomAvailability_${roomId}_${currentMonth}`;
+    try {
+      setAvailabilityLoading((prev) => ({ ...prev, [roomId]: true }));
 
-    const existingAvailabilities: RoomAvailability[] = JSON.parse(
-      localStorage.getItem(storageKey) || "[]"
-    );
+      const room = rooms.find((r) => r.id === roomId);
+      const roomType = room ? getRoomType(room.roomTypeId) : undefined;
+      const currentPrice =
+        getRoomAvailability(roomId).price || roomType?.basePrice || 0;
 
-    const updatedAvailabilities = [...existingAvailabilities];
-    const existingIndex = updatedAvailabilities.findIndex(
-      (a) => a.date === date
-    );
-
-    const room = rooms.find((r) => r.id === roomId);
-    const roomType = room ? getRoomType(room.roomTypeId) : undefined;
-
-    if (existingIndex >= 0) {
-      updatedAvailabilities[existingIndex] = {
-        ...updatedAvailabilities[existingIndex],
+      // Update availability via API
+      const updatedAvailability = await roomService.updateRoomAvailability(
+        roomId,
+        date,
         isAvailable,
-        price: updatedAvailabilities[existingIndex].price,
-      };
-    } else {
-      updatedAvailabilities.push({
-          roomId,
-          date,
-          isAvailable,
-          price: roomType?.basePrice || 0,
-          id: 0
-      });
-    }
+        currentPrice
+      );
 
-    localStorage.setItem(storageKey, JSON.stringify(updatedAvailabilities));
-    setAvailabilities((prev) => ({
-      ...prev,
-      [roomId]: updatedAvailabilities,
-    }));
+      // Update local state
+      setAvailabilities((prev) => {
+        const currentAvailabilities = [...(prev[roomId] || [])];
+        const existingIndex = currentAvailabilities.findIndex(
+          (a) => a.date === date
+        );
+
+        if (existingIndex >= 0) {
+          currentAvailabilities[existingIndex] = updatedAvailability;
+        } else {
+          currentAvailabilities.push(updatedAvailability);
+        }
+
+        return {
+          ...prev,
+          [roomId]: currentAvailabilities,
+        };
+      });
+    } catch (error) {
+      console.error("Failed to update room availability:", error);
+      alert("Échec de la mise à jour de la disponibilité");
+    } finally {
+      setAvailabilityLoading((prev) => ({ ...prev, [roomId]: false }));
+    }
   };
 
   const getUniqueFloors = () => {
@@ -202,30 +212,14 @@ export default function RoomList() {
     return [...new Set(floors)].sort((a, b) => Number(a) - Number(b));
   };
 
-  const handleDelete = (roomId: number) => {
+  const handleDelete = async (roomId: number) => {
     if (window.confirm("Supprimer cette chambre ?")) {
-      if (hotelId) {
-        const updatedRooms = rooms.filter((room) => room.id !== roomId);
-        localStorage.setItem(
-          `hotelRooms_${hotelId}`,
-          JSON.stringify(updatedRooms)
-        );
-        setRooms(updatedRooms);
-      } else {
-        const roomToDelete = rooms.find((room) => room.id === roomId);
-        if (roomToDelete) {
-          const hotelRooms = JSON.parse(
-            localStorage.getItem(`hotelRooms_${roomToDelete.hotelId}`) || "[]"
-          );
-          const updatedRooms = hotelRooms.filter(
-            (room: { id: number }) => room.id !== roomId
-          );
-          localStorage.setItem(
-            `hotelRooms_${roomToDelete.hotelId}`,
-            JSON.stringify(updatedRooms)
-          );
-          setRooms(rooms.filter((room) => room.id !== roomId));
-        }
+      try {
+        await roomService.deleteRoom(roomId);
+        setRooms(rooms.filter((room) => room.id !== roomId));
+      } catch (error) {
+        console.error("Failed to delete room:", error);
+        alert("Échec de la suppression de la chambre");
       }
     }
   };
@@ -330,6 +324,9 @@ export default function RoomList() {
           </button>
         </div>
       </div>
+
+      {/* Reste du composant identique... */}
+      {/* Je garde le même code pour les filtres et l'affichage des chambres */}
 
       <div className="bg-white rounded-lg shadow mb-6">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -522,12 +519,8 @@ export default function RoomList() {
                             !availability.isAvailable
                           );
                         }}
+                        loading={availabilityLoading[room.id]}
                       />
-                      {/* <span className="ml-2 text-sm">
-                        {availability.isAvailable
-                          ? "Disponible"
-                          : "Indisponible"}
-                      </span> */}
                     </div>
                   </div>
 
@@ -647,12 +640,8 @@ export default function RoomList() {
                                   !availability.isAvailable
                                 );
                               }}
+                              loading={availabilityLoading[room.id]}
                             />
-                            {/* <span className="ml-2 text-sm">
-                              {availability.isAvailable
-                                ? "Disponible"
-                                : "Indisponible"}
-                            </span> */}
                           </div>
                         </td>
                         <td className="px-6 py-4">

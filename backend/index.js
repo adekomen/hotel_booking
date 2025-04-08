@@ -14,16 +14,21 @@ const roomTypeRoutes = require("./routes/roomType.routes");
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
-app.use('/', authRoutes);
-app.use('/admin', adminRoutes);
-app.use('/users', userRoutes);
-app.use('/bookings', bookingRoutes);
-app.use('/rooms', roomRoutes);
-app.use('/hotels', hotelRoutes);
-app.use('/room-types', roomTypeRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/hotels', hotelRoutes);
+app.use('/api/room-types', roomTypeRoutes);
 
 const PORT = process.env.PORT || 5000;
 

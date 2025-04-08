@@ -3,6 +3,11 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Room, RoomType, Hotel } from "../../../models/types";
 import ImageGallery from "../../../components/ImageGallery";
 import { Info, Bed, Users, DollarSign, Building } from "lucide-react";
+import {
+  roomService,
+  roomTypeService,
+  hotelService,
+} from "../../../services/api";
 
 export default function CreateEditRoom() {
   const { hotelId, roomId } = useParams();
@@ -12,6 +17,7 @@ export default function CreateEditRoom() {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [room, setRoom] = useState<Partial<Room>>({
     hotelId: hotelId ? Number(hotelId) : 0,
     roomTypeId: 0,
@@ -23,58 +29,47 @@ export default function CreateEditRoom() {
     isSmokingAllowed: false,
   });
 
-  // Effet pour charger les types de chambre et les hôtels depuis localStorage
+  // Effet pour charger les types de chambre et les hôtels depuis l'API
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Récupérer les types de chambre depuis localStorage
-        const storedRoomTypes: RoomType[] = JSON.parse(
-          localStorage.getItem("roomTypes") || "[]"
-        );
+        setLoading(true);
+        setError(null);
 
-        // Récupérer la liste des hôtels depuis localStorage
-        const storedHotels: Hotel[] = JSON.parse(
-          localStorage.getItem("hotels") || "[]"
-        );
+        // Charger les types de chambre
+        const typesData = await roomTypeService.getAllRoomTypes();
+        setRoomTypes(typesData);
 
-        setRoomTypes(storedRoomTypes);
-        setHotels(storedHotels);
+        // Charger la liste des hôtels
+        const hotelsData = await hotelService.getAllHotels();
+        setHotels(hotelsData);
 
-        if (isEditing) {
-          // Récupérer les détails de la chambre en édition depuis localStorage
-          const storedRooms: Room[] = JSON.parse(
-            localStorage.getItem(`hotelRooms_${hotelId}`) || "[]"
-          );
-
-          const existingRoom = storedRooms.find((r) => r.id === Number(roomId));
-
-          if (existingRoom) {
-            setRoom(existingRoom);
-          } else {
-            // Fallback si la chambre n'est pas trouvée
-            console.error("Room not found in localStorage");
-          }
+        if (isEditing && roomId) {
+          // Récupérer les détails de la chambre en édition
+          const roomData = await roomService.getRoomById(Number(roomId));
+          setRoom(roomData);
         } else {
           // En mode création, définir des valeurs par défaut
-          if (storedRoomTypes.length > 0) {
+          if (typesData.length > 0) {
             // Définir le premier type comme défaut pour la création
-            setRoom((prev) => ({ ...prev, roomTypeId: storedRoomTypes[0].id }));
+            setRoom((prev) => ({ ...prev, roomTypeId: typesData[0].id }));
           }
 
           // Si hotelId est présent dans l'URL mais pas dans la liste des hôtels, réinitialiser
-          if (hotelId && !storedHotels.some((h) => h.id === Number(hotelId))) {
+          if (hotelId && !hotelsData.some((h) => h.id === Number(hotelId))) {
             setRoom((prev) => ({ ...prev, hotelId: 0 }));
           } else if (hotelId) {
             setRoom((prev) => ({ ...prev, hotelId: Number(hotelId) }));
-          } else if (storedHotels.length > 0) {
+          } else if (hotelsData.length > 0) {
             // Si pas d'hotelId dans l'URL et des hôtels existent, sélectionner le premier
-            setRoom((prev) => ({ ...prev, hotelId: storedHotels[0].id }));
+            setRoom((prev) => ({ ...prev, hotelId: hotelsData[0].id }));
           }
         }
 
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
+        setError("Erreur lors du chargement des données. Veuillez réessayer.");
         setLoading(false);
       }
     };
@@ -105,19 +100,18 @@ export default function CreateEditRoom() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Formulaire soumis");
 
     try {
       // Validation des données essentielles
       if (!room.roomNumber || !room.roomTypeId || !room.hotelId) {
-        alert("Veuillez remplir tous les champs obligatoires");
+        setError("Veuillez remplir tous les champs obligatoires");
         return;
       }
 
       // S'assurer que hotelId est un nombre valide
       const currentHotelId = Number(room.hotelId);
       if (isNaN(currentHotelId) || currentHotelId <= 0) {
-        alert("Veuillez sélectionner un hôtel valide");
+        setError("Veuillez sélectionner un hôtel valide");
         return;
       }
 
@@ -129,47 +123,19 @@ export default function CreateEditRoom() {
         floor: Number(room.floor || 1),
       };
 
-      // Récupérer les chambres existantes depuis localStorage
-      const storedRoomsString = localStorage.getItem(
-        `hotelRooms_${currentHotelId}`
-      );
-      console.log("Données récupérées:", storedRoomsString);
-      const storedRooms: Room[] = storedRoomsString
-        ? JSON.parse(storedRoomsString)
-        : [];
-
-      let updatedRooms: Room[] = [];
-
       if (isEditing && roomId) {
-        // Mettre à jour la chambre existante
-        updatedRooms = storedRooms.map((r) =>
-          r.id === Number(roomId) ? { ...r, ...roomData } : r
-        );
-        console.log("Mise à jour de la chambre:", updatedRooms);
+        // Mettre à jour la chambre existante via l'API
+        await roomService.updateRoom(Number(roomId), roomData);
       } else {
-        // Créer une nouvelle chambre avec un ID unique
-        const newRoom = {
-          ...roomData,
-          id: Date.now(), // Utiliser timestamp comme ID unique
-          createdAt: new Date().toISOString(),
-        } as Room;
-        updatedRooms = [...storedRooms, newRoom];
-        console.log("Nouvelle chambre créée:", newRoom);
+        // Créer une nouvelle chambre via l'API
+        await roomService.createRoom(roomData);
       }
 
-      // Enregistrer dans localStorage
-      localStorage.setItem(
-        `hotelRooms_${currentHotelId}`,
-        JSON.stringify(updatedRooms)
-      );
-      console.log("Données sauvegardées dans localStorage");
-
       // Rediriger vers la liste des chambres de l'hôtel
-      console.log("Redirection vers:", `/admin/hotels/${currentHotelId}/rooms`);
       navigate(`/admin/hotels/${currentHotelId}/rooms`);
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
-      alert(
+      setError(
         "Une erreur est survenue lors de la sauvegarde. Veuillez réessayer."
       );
     }
@@ -195,13 +161,19 @@ export default function CreateEditRoom() {
         {isEditing ? "Modifier la chambre" : "Ajouter une chambre"}
       </h1>
 
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            {/* Sélection de l'hôtel - Nouvelle section */}
+            {/* Sélection de l'hôtel */}
             <div className="mb-4">
               <label
                 className="block text-gray-700 text-sm font-bold mb-2"

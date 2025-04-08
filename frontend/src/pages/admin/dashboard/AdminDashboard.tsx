@@ -15,6 +15,20 @@ import {
   List,
   Calendar as CalendarIcon,
 } from "lucide-react";
+interface ApiStats {
+  utilisateurs: {
+    total: number;
+    admins: number;
+    clients: number;
+  };
+  hotels: number;
+  reservations: number;
+}
+
+import axios from "axios"; // Importation d'axios pour les requêtes API
+
+// Définition de l'URL de base de l'API
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -28,59 +42,104 @@ export default function AdminDashboard() {
     occupancyRate: 0,
     pendingBookings: 0,
     totalGuests: 0,
-    revenueChange: 0, // Ajout d'une propriété pour stocker la variation
+    revenueChange: 0,
+    totalUsers: 0,
+    totalAdmins: 0,
+    totalClients: 0,
+    totalHotels: 0,
+    totalBookings: 0,
   });
 
-  // Dates for comparison
+  // Dates pour comparaison
   const currentDate = new Date();
   const previousMonth = new Date();
   previousMonth.setMonth(previousMonth.getMonth() - 1);
   const currentMonthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
   const previousMonthStr = `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, "0")}`;
 
+  // Récupération du token d'authentification depuis le localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem("token");
+  };
+
+  // Configuration par défaut pour les requêtes axios
+  const axiosConfig = () => {
+    return {
+      headers: {
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+    };
+  };
+
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       try {
-        // Load hotels
-        const storedHotels = JSON.parse(localStorage.getItem("hotels") || "[]");
-        setHotels(storedHotels);
+        setLoading(true);
 
-        // Load room types
-        const storedRoomTypes = JSON.parse(
-          localStorage.getItem("roomTypes") || "[]"
+        // Récupération des données du dashboard depuis l'API
+        const dashboardResponse = await axios.get(
+          `${API_URL}/admin/dashboard`,
+          axiosConfig()
         );
-        setRoomTypes(storedRoomTypes);
+        const dashboardData = dashboardResponse.data;
 
-        // Load rooms (combining from all hotels)
-        let allRooms: Room[] = [];
-        storedHotels.forEach((hotel: Hotel) => {
-          const hotelRooms = JSON.parse(
-            localStorage.getItem(`hotelRooms_${hotel.id}`) || "[]"
-          );
-          allRooms = [...allRooms, ...hotelRooms];
-        });
-        setRooms(allRooms);
-
-        // Load bookings
-        const storedBookings = JSON.parse(
-          localStorage.getItem("bookings") || "[]"
+        // Récupération des hôtels
+        const hotelsResponse = await axios.get(
+          `${API_URL}/hotels`,
+          axiosConfig()
         );
-        setBookings(storedBookings);
+        setHotels(hotelsResponse.data);
 
-        // Calculate stats
-        calculateStats(storedBookings, allRooms);
+        // Récupération des types de chambres
+        const roomTypesResponse = await axios.get(
+          `${API_URL}/room-types`,
+          axiosConfig()
+        );
+        setRoomTypes(roomTypesResponse.data);
+
+        // Récupération des chambres
+        const roomsResponse = await axios.get(
+          `${API_URL}/rooms`,
+          axiosConfig()
+        );
+        setRooms(roomsResponse.data);
+
+        // Récupération des réservations
+        const bookingsResponse = await axios.get(
+          `${API_URL}/bookings`,
+          axiosConfig()
+        );
+        setBookings(bookingsResponse.data);
+
+        // Mettre à jour les statistiques avec les données de l'API
+        const apiStats = dashboardData.stats;
+
+        // Calcul des statistiques qui ne sont pas directement fournies par l'API
+        calculateStats(bookingsResponse.data, roomsResponse.data, apiStats);
       } catch (error) {
-        console.error("Error loading dashboard data:", error);
+        console.error(
+          "Erreur lors du chargement des données du dashboard:",
+          error
+        );
+        // Gérer les erreurs d'authentification
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          // Rediriger vers la page de connexion si non authentifié
+          navigate("/login");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [navigate]);
 
-  const calculateStats = (bookings: Booking[], allRooms: Room[]) => {
-    // Calculate total current month revenue
+  const calculateStats = (
+    bookings: Booking[],
+    allRooms: Room[],
+    apiStats: ApiStats
+  ) => {
+    // Calcul du revenu total pour le mois en cours
     const currentMonthBookings = bookings.filter((booking) =>
       booking.checkInDate.startsWith(currentMonthStr)
     );
@@ -90,7 +149,7 @@ export default function AdminDashboard() {
       0
     );
 
-    // Calculate previous month revenue for comparison
+    // Calcul du revenu du mois précédent pour comparaison
     const previousMonthBookings = bookings.filter((booking) =>
       booking.checkInDate.startsWith(previousMonthStr)
     );
@@ -99,61 +158,66 @@ export default function AdminDashboard() {
       0
     );
 
-    // Calculate revenue change percentage
+    // Calcul du pourcentage de variation des revenus
     const revenueChange =
       previousRevenue > 0
         ? ((totalRevenue - previousRevenue) / previousRevenue) * 100
         : 0;
 
-    // Calculate occupancy rate (simplified)
+    // Calcul du taux d'occupation (simplifié)
     const totalRooms = allRooms.length;
     const occupiedRoomIds = new Set(currentMonthBookings.map((b) => b.roomId));
     const occupancyRate =
       totalRooms > 0 ? (occupiedRoomIds.size / totalRooms) * 100 : 0;
 
-    // Count pending bookings
+    // Comptage des réservations en attente
     const pendingBookings = bookings.filter(
       (b) => b.status === "pending"
     ).length;
 
-    // Count total guests for current month
+    // Comptage du nombre total de clients pour le mois en cours
     const totalGuests = currentMonthBookings.reduce(
       (sum, booking) => sum + (booking.guestCount || 1),
       0
     );
 
+    // Mise à jour des statistiques avec les données de l'API et les calculs locaux
     setStats({
       totalRevenue,
       occupancyRate,
       pendingBookings,
       totalGuests,
       revenueChange,
+      totalUsers: apiStats.utilisateurs.total,
+      totalAdmins: apiStats.utilisateurs.admins,
+      totalClients: apiStats.utilisateurs.clients,
+      totalHotels: apiStats.hotels,
+      totalBookings: apiStats.reservations,
     });
   };
 
   const getPopularRooms = () => {
-    // Create a map to count bookings per room
+    // Création d'une map pour compter les réservations par chambre
     const roomBookingCounts = new Map<number, number>();
     bookings.forEach((booking) => {
       const count = roomBookingCounts.get(booking.roomId) || 0;
       roomBookingCounts.set(booking.roomId, count + 1);
     });
 
-    // Convert to array and sort by count
+    // Conversion en tableau et tri par nombre de réservations
     const roomCounts = Array.from(roomBookingCounts.entries())
       .map(([roomId, count]) => ({ roomId, count }))
       .sort((a, b) => b.count - a.count);
 
-    // Get top 5 room details
+    // Récupération des 5 chambres les plus populaires avec leurs détails
     const topRooms = roomCounts.slice(0, 5).map((item) => {
       const room = rooms.find((r) => r.id === item.roomId);
       const hotel = hotels.find((h) => h.id === room?.hotelId);
       const roomType = roomTypes.find((rt) => rt.id === room?.roomTypeId);
 
-      // Supposons que roomType.images est un tableau de chaînes ou un tableau d'objets avec imageUrl
+      // Gestion des images
       let imageUrl = null;
       if (roomType?.images && roomType.images.length > 0) {
-        // Vérifie si le premier élément est un objet avec imageUrl
         if (
           typeof roomType.images[0] === "object" &&
           roomType.images[0] !== null
@@ -164,7 +228,6 @@ export default function AdminDashboard() {
 
           imageUrl = (roomType.images[0] as RoomImage).imageUrl || null;
         } else {
-          // Si c'est une chaîne, utiliser directement
           imageUrl = roomType.images[0] as string;
         }
       }
@@ -172,8 +235,8 @@ export default function AdminDashboard() {
       return {
         id: room?.id || 0,
         roomNumber: room?.roomNumber || "",
-        hotelName: hotel?.name || "Unknown Hotel",
-        typeName: roomType?.name || "Unknown Type",
+        hotelName: hotel?.name || "Hôtel inconnu",
+        typeName: roomType?.name || "Type inconnu",
         bookingCount: item.count,
         image: imageUrl,
       };
@@ -196,8 +259,8 @@ export default function AdminDashboard() {
         return {
           ...booking,
           roomNumber: room?.roomNumber || "",
-          hotelName: hotel?.name || "Unknown Hotel",
-          // On ajoute cette propriété si elle n'existe pas dans le type Booking
+          hotelName: hotel?.name || "Hôtel inconnu",
+          // Ajout de cette propriété si elle n'existe pas dans le type Booking
           guestName:
             booking.guestName || booking.userId
               ? `Client #${booking.userId}`
@@ -512,13 +575,13 @@ export default function AdminDashboard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {hotels.map((hotel) => {
-                  // Get rooms for this hotel
+                  // Récupération des chambres pour cet hôtel
                   const hotelRooms = rooms.filter(
                     (r) => r.hotelId === hotel.id
                   );
                   const roomCount = hotelRooms.length;
 
-                  // Calculate occupancy
+                  // Calcul du taux d'occupation
                   const occupiedRoomIds = new Set(
                     bookings
                       .filter(

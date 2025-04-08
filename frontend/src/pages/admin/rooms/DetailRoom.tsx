@@ -17,6 +17,11 @@ import {
   Cigarette,
 } from "lucide-react";
 import AvailabilityCalendar from "./AvailabilityCalendar";
+import {
+  roomService,
+  roomTypeService,
+  hotelService,
+} from "../../../services/api";
 
 export default function DetailRoom() {
   const { roomId } = useParams();
@@ -25,47 +30,46 @@ export default function DetailRoom() {
   const [roomType, setRoomType] = useState<RoomType | null>(null);
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [stats, setStats] = useState({ occupancyRate: 0, monthlyRevenue: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Charger toutes les chambres de tous les hôtels
-        const storedHotels = JSON.parse(localStorage.getItem("hotels") || "[]");
-        let allRooms: Room[] = [];
+        setLoading(true);
+        setError(null);
 
-        storedHotels.forEach((hotel: Hotel) => {
-          const hotelRooms = JSON.parse(
-            localStorage.getItem(`hotelRooms_${hotel.id}`) || "[]"
-          );
-          allRooms = [...allRooms, ...hotelRooms];
-        });
-
-        const selectedRoom = allRooms.find((r) => r.id === Number(roomId));
-
-        if (!selectedRoom) {
-          throw new Error("Chambre non trouvée");
+        if (!roomId) {
+          throw new Error("ID de chambre non spécifié");
         }
 
-        setRoom(selectedRoom);
+        // Récupérer les détails de la chambre
+        const roomData = await roomService.getRoomById(Number(roomId));
+        setRoom(roomData);
 
-        // Trouver l'hôtel correspondant
-        const roomHotel = storedHotels.find(
-          (h: Hotel) => h.id === selectedRoom.hotelId
-        );
-        setHotel(roomHotel || null);
+        // Récupérer les détails de l'hôtel
+        const hotelData = await hotelService.getHotelById(roomData.hotelId);
+        setHotel(hotelData);
 
-        // Charger le type de chambre
-        const storedRoomTypes = JSON.parse(
-          localStorage.getItem("roomTypes") || "[]"
+        // Récupérer les détails du type de chambre
+        const roomTypeData = await roomTypeService.getRoomTypeById(
+          roomData.roomTypeId
         );
-        const selectedRoomType = storedRoomTypes.find(
-          (type: RoomType) => type.id === selectedRoom.roomTypeId
-        );
-        setRoomType(selectedRoomType || null);
+        setRoomType(roomTypeData);
+
+        // Ici on pourrait ajouter l'appel API pour obtenir les statistiques
+        // Par exemple: const statsData = await roomService.getRoomStats(Number(roomId));
+        // Pour l'instant, utilisons des données factices
+        setStats({
+          occupancyRate: 75,
+          monthlyRevenue: 2450,
+        });
+
+        setLoading(false);
       } catch (error) {
         console.error("Erreur lors du chargement:", error);
-      } finally {
+        setError("Erreur lors du chargement des données de la chambre.");
         setLoading(false);
       }
     };
@@ -73,23 +77,20 @@ export default function DetailRoom() {
     fetchData();
   }, [roomId]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette chambre ?")) {
       if (!room) return;
 
-      // Supprimer la chambre
-      const hotelRooms = JSON.parse(
-        localStorage.getItem(`hotelRooms_${room.hotelId}`) || "[]"
-      );
-      const updatedRooms = hotelRooms.filter((r: Room) => r.id !== room.id);
+      try {
+        // Supprimer la chambre via l'API
+        await roomService.deleteRoom(room.id);
 
-      localStorage.setItem(
-        `hotelRooms_${room.hotelId}`,
-        JSON.stringify(updatedRooms)
-      );
-
-      // Rediriger vers la liste des chambres
-      navigate(`/admin/hotels/${room.hotelId}/rooms`);
+        // Rediriger vers la liste des chambres de l'hôtel
+        navigate(`/admin/hotels/${room.hotelId}/rooms`);
+      } catch (error) {
+        console.error("Erreur lors de la suppression:", error);
+        setError("Une erreur est survenue lors de la suppression.");
+      }
     }
   };
 
@@ -109,6 +110,20 @@ export default function DetailRoom() {
 
   if (loading) {
     return <div className="text-center py-8">Chargement...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500">{error}</p>
+        <Link
+          to="/admin/rooms"
+          className="text-blue-500 hover:underline mt-2 block"
+        >
+          Retour à la liste des chambres
+        </Link>
+      </div>
+    );
   }
 
   if (!room || !roomType) {
@@ -330,11 +345,11 @@ export default function DetailRoom() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-blue-800">Taux d'occupation</p>
-                  <p className="text-xl font-bold">75%</p>
+                  <p className="text-xl font-bold">{stats.occupancyRate}%</p>
                 </div>
                 <div className="bg-green-50 p-3 rounded-lg">
                   <p className="text-sm text-green-800">Revenu mensuel</p>
-                  <p className="text-xl font-bold">2,450€</p>
+                  <p className="text-xl font-bold">{stats.monthlyRevenue}€</p>
                 </div>
               </div>
             </div>

@@ -3,6 +3,7 @@ import { Edit, Trash2, Plus, Eye, Bed, Users, DollarSign } from "lucide-react";
 import ImageGallery from "../../../components/ImageGallery";
 import { RoomType } from "../../../models/types";
 import { useNavigate } from "react-router-dom";
+import { roomTypeService } from "../../../services/api";
 
 interface RoomTypeListProps {
   roomTypes?: RoomType[];
@@ -15,20 +16,31 @@ const RoomTypeList: React.FC<RoomTypeListProps> = ({
 }) => {
   const navigate = useNavigate();
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Si les types de chambres sont fournis via les props, utilisez-les
-  // Sinon, vous pourriez les charger depuis une API
+  // Charger les types de chambres via l'API
   useEffect(() => {
     if (propRoomTypes) {
       setRoomTypes(propRoomTypes);
     } else {
-      // Charger depuis localStorage
-      const storedRoomTypes = JSON.parse(
-        localStorage.getItem("roomTypes") || "[]"
-      );
-      setRoomTypes(storedRoomTypes);
+      fetchRoomTypes();
     }
   }, [propRoomTypes]);
+
+  const fetchRoomTypes = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await roomTypeService.getAllRoomTypes();
+      setRoomTypes(data);
+    } catch (err) {
+      console.error("Erreur lors du chargement des types de chambres", err);
+      setError("Impossible de charger les types de chambres");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAdd = () => {
     navigate("/admin/room-types/create");
@@ -42,22 +54,46 @@ const RoomTypeList: React.FC<RoomTypeListProps> = ({
     navigate(`/admin/room-types/view/${id}`);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (
       window.confirm("Êtes-vous sûr de vouloir supprimer ce type de chambre ?")
     ) {
-      if (onDelete) {
-        onDelete(id);
-      } else {
-        // Supprimer de localStorage
-        const updatedRoomTypes = roomTypes.filter(
-          (roomType) => roomType.id !== id
-        );
-        setRoomTypes(updatedRoomTypes);
-        localStorage.setItem("roomTypes", JSON.stringify(updatedRoomTypes));
+      try {
+        if (onDelete) {
+          onDelete(id);
+        } else {
+          await roomTypeService.deleteRoomType(id);
+          // Rafraîchir la liste après suppression
+          setRoomTypes(roomTypes.filter((roomType) => roomType.id !== id));
+        }
+      } catch (err) {
+        console.error("Erreur lors de la suppression du type de chambre", err);
+        alert("Erreur lors de la suppression du type de chambre");
       }
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p>Chargement des types de chambres...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p className="text-red-500">{error}</p>
+        <button
+          onClick={fetchRoomTypes}
+          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4">

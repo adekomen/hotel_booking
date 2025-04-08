@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Hotel } from "../../../models/types";
+import { hotelService } from "../../../services/api";
 import {
   Edit,
   Trash2,
@@ -13,48 +14,45 @@ import {
   Dumbbell,
   WavesLadder,
   Image as ImageIcon,
+  AlertCircle,
 } from "lucide-react";
 
 export default function HotelList() {
   const navigate = useNavigate();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Récupérer les hôtels depuis localStorage
-    const loadHotels = () => {
+    // Récupérer les hôtels depuis l'API
+    const fetchHotels = async () => {
       try {
-        const storedHotels = localStorage.getItem("hotels");
-        if (storedHotels) {
-          setHotels(JSON.parse(storedHotels));
-        }
+        setIsLoading(true);
+        const data = await hotelService.getAllHotels();
+        setHotels(data);
+        setError(null);
       } catch (error) {
         console.error("Erreur lors du chargement des hôtels:", error);
+        setError("Impossible de charger les hôtels. Veuillez réessayer.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadHotels();
+    fetchHotels();
   }, []);
 
-  const handleDeleteHotel = (hotelId: number) => {
+  const handleDeleteHotel = async (hotelId: number) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cet hôtel ?")) {
       try {
-        // Filtrer les hôtels pour exclure celui qu'on veut supprimer
-        const updatedHotels = hotels.filter((hotel) => hotel.id !== hotelId);
-
-        // Sauvegarder la liste mise à jour dans localStorage
-        localStorage.setItem("hotels", JSON.stringify(updatedHotels));
-
-        // Mettre à jour l'état local
-        setHotels(updatedHotels);
-
-        // Facultatif: supprimer également les chambres et images associées à cet hôtel
-        localStorage.removeItem(`hotelRooms_${hotelId}`);
-        localStorage.removeItem(`hotelImages_${hotelId}`);
+        await hotelService.deleteHotel(hotelId);
+        // Mettre à jour l'état local après suppression
+        setHotels((prevHotels) =>
+          prevHotels.filter((hotel) => hotel.id !== hotelId)
+        );
       } catch (error) {
         console.error("Erreur lors de la suppression de l'hôtel:", error);
+        alert("Erreur lors de la suppression de l'hôtel. Veuillez réessayer.");
       }
     }
   };
@@ -72,7 +70,6 @@ export default function HotelList() {
   };
 
   const renderStarRating = (rating?: number) => {
-    // Respecter le fait que starRating est optionnel dans l'interface
     const safeRating = rating || 0;
     return (
       <div className="flex items-center">
@@ -96,6 +93,23 @@ export default function HotelList() {
     return (
       <div className="container mx-auto p-4 text-center">
         <p>Chargement des hôtels...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center">
+          <AlertCircle size={20} className="mr-2" />
+          <span>{error}</span>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg"
+        >
+          Réessayer
+        </button>
       </div>
     );
   }

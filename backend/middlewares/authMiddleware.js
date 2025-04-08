@@ -1,35 +1,81 @@
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
-const JWT_SECRET = process.env.JWT_SECRET || "secret_key";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET must be defined in environment variables");
+}
 
 /* Middleware d'authentification */
 const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  // Vérification du header Authorization
+  const authHeader = req.headers.authorization || req.headers.Authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Accès refusé. Token manquant." });
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({
+      success: false,
+      message: "Accès refusé. Token manquant ou mal formaté.",
+      code: "MISSING_TOKEN",
+    });
   }
 
+  // Extraction du token
   const token = authHeader.split(" ")[1];
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+  // Vérification du token
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      let message = "Token invalide";
+      let statusCode = 401;
+
+      if (err.name === "TokenExpiredError") {
+        message = "Token expiré";
+        statusCode = 403;
+      } else if (err.name === "JsonWebTokenError") {
+        message = "Token malformé";
+      }
+
+      return res.status(statusCode).json({
+        success: false,
+        message,
+        code: "INVALID_TOKEN",
+      });
+    }
+
+    // Ajout des informations utilisateur à la requête
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    };
+
     next();
-  } catch (error) {
-    return res.status(403).json({ message: "Token invalide ou expiré." });
-  }
+  });
 };
 
 /* Middleware pour vérifier le rôle */
-const checkRole = (role) => {
+const checkRole = (allowedRoles) => {
   return (req, res, next) => {
-    if (req.user.role !== role) {
-      return res.status(403).json({ message: "Accès refusé. Vous n'avez pas le droit d'accéder à cette ressource." });
+    if (!Array.isArray(allowedRoles)) {
+      allowedRoles = [allowedRoles];
     }
+
+    if (!req.user?.role || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Accès refusé. Privilèges insuffisants.",
+        code: "INSUFFICIENT_PRIVILEGES",
+        requiredRoles: allowedRoles,
+        yourRole: req.user?.role || "none",
+      });
+    }
+
     next();
   };
 };
 
-module.exports = { authenticate, checkRole };
+module.exports = {
+  authenticate,
+  checkRole,
+  JWT_SECRET, // Exporté pour les tests
+};

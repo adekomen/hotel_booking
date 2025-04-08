@@ -1,6 +1,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Hotel, HotelImage } from "../../../models/types";
+import { hotelService, hotelImageService } from "../../../services/api";
 import {
   Upload,
   Star,
@@ -11,6 +12,7 @@ import {
   X,
   Check,
   ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 
 export default function HotelImageManager() {
@@ -24,27 +26,25 @@ export default function HotelImageManager() {
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    // Charger les données de l'hôtel
-    const loadHotelData = () => {
+    // Charger les données de l'hôtel et ses images depuis l'API
+    const loadHotelData = async () => {
+      if (!id) return;
+
       try {
-        const existingHotels = JSON.parse(
-          localStorage.getItem("hotels") || "[]"
-        );
-        const foundHotel = existingHotels.find(
-          (h: Hotel) => h.id === parseInt(id as string, 10)
-        );
+        setLoading(true);
+        const hotelData = await hotelService.getHotelById(Number(id));
+        setHotel(hotelData);
 
-        if (foundHotel) {
-          setHotel(foundHotel);
-
-          // Initialiser les images si elles existent déjà
-          if (foundHotel.images && foundHotel.images.length > 0) {
-            setImages(foundHotel.images);
-          }
+        // Si les images ne sont pas incluses dans la réponse de l'hôtel,
+        // nous devons les récupérer séparément
+        if (!hotelData.images) {
+          const imagesData = await hotelImageService.getHotelImages(Number(id));
+          setImages(imagesData);
         } else {
-          console.error("Hôtel non trouvé");
-          navigate("/admin/hotels");
+          setImages(hotelData.images);
         }
+
+        setErrorMessage("");
       } catch (error) {
         console.error("Erreur lors du chargement des données:", error);
         setErrorMessage("Erreur lors du chargement des données de l'hôtel");
@@ -56,57 +56,31 @@ export default function HotelImageManager() {
     loadHotelData();
   }, [id, navigate]);
 
-  // Sauvegarder les changements d'images dans localStorage
-  const saveImagesToStorage = (updatedImages: HotelImage[]) => {
-    try {
-      const existingHotels = JSON.parse(localStorage.getItem("hotels") || "[]");
-      const hotelIndex = existingHotels.findIndex(
-        (h: Hotel) => h.id === parseInt(id as string, 10)
-      );
-
-      if (hotelIndex !== -1) {
-        // Mettre à jour les images de l'hôtel
-        existingHotels[hotelIndex].images = updatedImages;
-        localStorage.setItem("hotels", JSON.stringify(existingHotels));
-
-        // Mettre à jour l'état local
-        setHotel({ ...hotel!, images: updatedImages });
-        setImages(updatedImages);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde des images:", error);
-      setErrorMessage("Erreur lors de la sauvegarde des images");
-      return false;
-    }
-  };
-
   // Ajouter une nouvelle image
-  const handleAddImage = (e: FormEvent) => {
+  const handleAddImage = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!newImageUrl.trim()) {
+    if (!newImageUrl.trim() || !id) {
       setErrorMessage("Veuillez entrer une URL d'image valide");
       return;
     }
 
     try {
-      const newImage: HotelImage = {
-        id: Date.now(), // Générer un ID unique basé sur le timestamp
-        hotelId: parseInt(id as string, 10),
+      const imageData = {
+        hotelId: Number(id),
         imageUrl: newImageUrl,
-        isPrimary: images.length === 0, // Première image est primaire par défaut
-        createdAt: new Date().toISOString(),
+        isPrimary: images.length === 0,
       };
 
-      const updatedImages = [...images, newImage];
+      await hotelImageService.addHotelImage(imageData);
 
-      if (saveImagesToStorage(updatedImages)) {
-        setNewImageUrl("");
-        setSuccessMessage("Image ajoutée avec succès");
-        setTimeout(() => setSuccessMessage(""), 3000);
-      }
+      // Mettre à jour la liste des images
+      const updatedImages = await hotelImageService.getHotelImages(Number(id));
+      setImages(updatedImages);
+
+      setNewImageUrl("");
+      setSuccessMessage("Image ajoutée avec succès");
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       console.error("Erreur lors de l'ajout de l'image:", error);
       setErrorMessage("Erreur lors de l'ajout de l'image");
@@ -114,45 +88,59 @@ export default function HotelImageManager() {
   };
 
   // Supprimer une image
-  const handleDeleteImage = (imageId: number) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette image ?")) {
-      try {
-        // Vérifier si c'est l'image primaire
-        const imageToDelete = images.find((img) => img.id === imageId);
-        const updatedImages = images.filter((img) => img.id !== imageId);
+  const handleDeleteImage = async (imageId: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette image ?")) {
+      return;
+    }
 
-        // Si on supprime l'image primaire, définir une autre comme primaire
-        if (
-          imageToDelete &&
-          imageToDelete.isPrimary &&
-          updatedImages.length > 0
-        ) {
-          updatedImages[0].isPrimary = true;
-        }
+    try {
+      // Vérifier si c'est l'image primaire
+      const imageToDelete = images.find((img) => img.id === imageId);
 
-        if (saveImagesToStorage(updatedImages)) {
-          setSuccessMessage("Image supprimée avec succès");
-          setTimeout(() => setSuccessMessage(""), 3000);
-        }
-      } catch (error) {
-        console.error("Erreur lors de la suppression de l'image:", error);
-        setErrorMessage("Erreur lors de la suppression de l'image");
+      await hotelImageService.deleteHotelImage(imageId);
+
+      // Récupérer la liste mise à jour des images
+      const updatedImages = await hotelImageService.getHotelImages(Number(id));
+
+      // Si on a supprimé l'image primaire et qu'il reste des images,
+      // définir une autre comme primaire
+      if (
+        imageToDelete &&
+        imageToDelete.isPrimary &&
+        updatedImages.length > 0
+      ) {
+        await hotelImageService.setPrimaryImage(
+          updatedImages[0].id,
+          Number(id)
+        );
+        // Récupérer à nouveau les images avec le nouvel état de isPrimary
+        const refreshedImages = await hotelImageService.getHotelImages(
+          Number(id)
+        );
+        setImages(refreshedImages);
+      } else {
+        setImages(updatedImages);
       }
+
+      setSuccessMessage("Image supprimée avec succès");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'image:", error);
+      setErrorMessage("Erreur lors de la suppression de l'image");
     }
   };
 
   // Définir une image comme principale
-  const handleSetPrimary = (imageId: number) => {
+  const handleSetPrimary = async (imageId: number) => {
     try {
-      const updatedImages = images.map((img) => ({
-        ...img,
-        isPrimary: img.id === imageId,
-      }));
+      await hotelImageService.setPrimaryImage(imageId, Number(id));
 
-      if (saveImagesToStorage(updatedImages)) {
-        setSuccessMessage("Image principale définie");
-        setTimeout(() => setSuccessMessage(""), 3000);
-      }
+      // Récupérer la liste mise à jour des images pour refléter la nouvelle image primaire
+      const updatedImages = await hotelImageService.getHotelImages(Number(id));
+      setImages(updatedImages);
+
+      setSuccessMessage("Image principale définie");
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       console.error(
         "Erreur lors de la définition de l'image principale:",
@@ -173,8 +161,9 @@ export default function HotelImageManager() {
   if (!hotel) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <strong>Erreur:</strong> Hôtel non trouvé.
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center">
+          <AlertCircle className="mr-2 h-5 w-5" />
+          <span>Erreur: Hôtel non trouvé.</span>
         </div>
         <div className="mt-4">
           <button
@@ -208,7 +197,10 @@ export default function HotelImageManager() {
       {/* Messages de succès/erreur */}
       {errorMessage && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex items-center justify-between">
-          <span>{errorMessage}</span>
+          <span className="flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            {errorMessage}
+          </span>
           <button onClick={() => setErrorMessage("")} className="text-red-700">
             <X className="h-5 w-5" />
           </button>

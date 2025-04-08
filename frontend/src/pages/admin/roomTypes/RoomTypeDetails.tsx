@@ -3,6 +3,7 @@ import { X, Users, DollarSign, ArrowLeft } from "lucide-react";
 import ImageGallery from "../../../components/ImageGallery";
 import { RoomType } from "../../../models/types";
 import { useNavigate, useParams } from "react-router-dom";
+import { roomTypeService } from "../../../services/api";
 
 interface RoomTypeDetailsProps {
   roomType?: RoomType;
@@ -21,33 +22,29 @@ const RoomTypeDetails: React.FC<RoomTypeDetailsProps> = ({
     propRoomType || null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (propRoomType) {
       setRoomType(propRoomType);
     } else if (id) {
-      // Charger les données depuis localStorage
-      setIsLoading(true);
-      try {
-        const storedRoomTypes = JSON.parse(
-          localStorage.getItem("roomTypes") || "[]"
-        );
-        const foundRoomType = storedRoomTypes.find(
-          (rt: RoomType) => rt.id === parseInt(id)
-        );
-
-        if (foundRoomType) {
-          setRoomType(foundRoomType);
-        } else {
-          console.error("Type de chambre non trouvé avec ID:", id);
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement du type de chambre", error);
-      } finally {
-        setIsLoading(false);
-      }
+      fetchRoomType(parseInt(id));
     }
   }, [id, propRoomType]);
+
+  const fetchRoomType = async (roomTypeId: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await roomTypeService.getRoomTypeById(roomTypeId);
+      setRoomType(data);
+    } catch (err) {
+      console.error("Erreur lors du chargement du type de chambre", err);
+      setError("Impossible de charger le type de chambre");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleClose = () => {
     if (onClose) {
@@ -71,6 +68,20 @@ const RoomTypeDetails: React.FC<RoomTypeDetailsProps> = ({
     return (
       <div className="container mx-auto p-4 text-center">
         <p>Chargement...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p className="text-red-500">{error}</p>
+        <button
+          onClick={handleClose}
+          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          Retour à la liste
+        </button>
       </div>
     );
   }
