@@ -9,7 +9,7 @@ const createAdmin = async () => {
       password_hash: await bcrypt.hash("LesaintDeDieu1208", 12),
       first_name: "Franco",
       last_name: "ADESU",
-      sexe: "Masculin",
+      sexe: "Masculin"
       role: "admin",
     });
     console.log("✅ Compte admin créé avec succès");
