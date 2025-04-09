@@ -329,7 +329,7 @@ const CreateEditRoomType: React.FC<CreateEditRoomTypeProps> = ({
                       Aucune image
                     </p>
                   )}
-                </div>
+                </div>un
               </div>
 
               <div>

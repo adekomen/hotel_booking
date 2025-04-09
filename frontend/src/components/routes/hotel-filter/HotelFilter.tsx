@@ -35,7 +35,7 @@ const HotelsPage: React.FC = () => {
       distance: '1km du centre ville',
       features: [
         'Annulation gratuite ',
-        'c'
+        'Pas de prépaiement nécessaire – paiement à la proriété'
       ],
       rating: 5,
       type: 'Hotel',
@@ -97,10 +97,12 @@ const HotelsPage: React.FC = () => {
               value={city}
               onChange={(e) => setCity(e.target.value)}
             >
-              <option value="Pune">Pune</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Delhi">Delhi</option>
-            </select>
+              <option value="Cotonou">Cotonou</option>
+              <option value="Porto-Novo">Porto-Novo</option>
+              <option value="Parakou">Parakou</option>
+              <option value="Natitingou">Natitingou</option>
+
+            </select>g
           </div>
 
           {/* Check-in */}
@@ -132,7 +134,7 @@ const HotelsPage: React.FC = () => {
               onChange={(e) => setGuests(Number(e.target.value))}
             >
               {[1, 2, 3, 4].map(num => (
-                <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
+                <option key={num} value={num}>{num} {num === 1 ? 'invité' : 'invités'}</option>
               ))}
             </select>
           </div>
@@ -140,7 +142,7 @@ const HotelsPage: React.FC = () => {
           {/* Bouton de recherche */}
           <div className="flex items-end">
             <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg">
-              SEARCH
+              RECHERCHER
             </button>
           </div>
         </div>
@@ -220,7 +222,7 @@ const HotelsPage: React.FC = () => {
                   <div className="mt-3 space-y-1">
                     {hotel.features.map((feature, index) => (
                       <div key={index} className="flex items-center">
-                        <span className="text-green-500 mr-2">✔</span>https://source.unsplash.com/random/400x300/?marriott
+                        <span className="text-green-500 mr-2">✔</span>
                         <span>{feature}</span>
                       </div>
                     ))}

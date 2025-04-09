@@ -35,9 +35,27 @@ import AboutUs from "./components/routes/about-us/AboutUs";
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Auth Routes */}
+      {/* Global Navbar */}
+      <GlobalNavbar />
+      <div className="min-h-screen bg-gray-100">
+        {/* Vous pourriez avoir un Header/Navbar ici */}
+        <main>
+          <Routes>
+
+          {/* Auth Routes */}
         {/* <Route path="/login" element={<LoginPage />} /> */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />  
+        <Route 
+            path="/"
+            element={
+              <>
+                < GlobalSearch/>
+                < HotelCard/>
+                < NearbyHotels/>
+              </>
+            }
+          />
 
         {/* Admin Routes with Layout */}
         <Route path="/admin" element={<AdminLayout />}>
@@ -86,23 +104,6 @@ function App() {
           path="/admin/*"
           element={<Navigate to="/admin/dashboard" replace />}
         />
-      </Routes>
-      <div className="min-h-screen bg-gray-100">
-        {/* Vous pourriez avoir un Header/Navbar ici */}
-        <GlobalNavbar />
-
-        <main>
-          <Routes>
-          <Route 
-            path="/"
-            element={
-              <>
-                < GlobalSearch/>
-                < HotelCard/>
-                < NearbyHotels/>
-              </>
-            }
-          />
           <Route path="/city-menu" element={<CityMenu />} />
           <Route path="/hotel-filter" element={<HotelFilter />} />
           <Route path="/rooms" element={<CreateEditRoom />} />
@@ -111,8 +112,7 @@ function App() {
             element={<RoomAvailabilityManager />}
           />
           <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />  
+          
           </Routes>
         </main>
         <GlobalFooter />
