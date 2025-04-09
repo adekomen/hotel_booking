@@ -5,11 +5,11 @@ const bcrypt = require("bcryptjs");
 const createAdmin = async () => {
   try {
     await User.create({
-      email: "k.francoisadesu@gmail.com",
-      password_hash: await bcrypt.hash("LesaintDeDieu1208", 12),
+      email: "adekomenadesu@gmail.com",
+      password_hash: await bcrypt.hash("Lesaint01208", 12),
       first_name: "Franco",
       last_name: "ADESU",
-      sexe: "Masculin"
+      sexe: "Masculin",
       role: "admin",
     });
     console.log("✅ Compte admin créé avec succès");

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 type Sexe = "Masculin" | "Féminin";
@@ -23,8 +23,8 @@ const Register: React.FC = () => {
     sexe: "Masculin",
   });
 
-  const { register, isAuthenticated, isLoading, error } = useAuth();
-
+  const { register, isLoading, error } = useAuth();
+ 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -54,15 +54,9 @@ const Register: React.FC = () => {
       password: formData.password,
       sexe: formData.sexe,
       role:
-        adminToken === process.env.REACT_APP_ADMIN_KEY
-          ? "admin"
-          : "simple-user",
+        adminToken === import.meta.env.VITE_ADMIN_KEY ? "admin" : "simple-user",
     });
   };
-
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

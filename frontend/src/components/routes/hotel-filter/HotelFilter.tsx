@@ -35,7 +35,7 @@ const HotelsPage: React.FC = () => {
       distance: '1km du centre ville',
       features: [
         'Annulation gratuite ',
-        'c'
+        'Pas de prépaiement nécessaire – paiement à la proriété'
       ],
       rating: 5,
       type: 'Hotel',
@@ -91,21 +91,27 @@ const HotelsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Ville */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Villes</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Villes
+            </label>
             <select
               className="w-full p-3 border border-gray-300 rounded-lg"
               value={city}
               onChange={(e) => setCity(e.target.value)}
             >
-              <option value="Pune">Pune</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Delhi">Delhi</option>
+              <option value="Cotonou">Cotonou</option>
+              <option value="Porto-Novo">Porto-Novo</option>
+              <option value="Parakou">Parakou</option>
+              <option value="Natitingou">Natitingou</option>
             </select>
+            g
           </div>
 
           {/* Check-in */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Check-in
+            </label>
             <DatePicker
               selected={checkInDate}
               onChange={(date) => setCheckInDate(date)}
@@ -115,7 +121,9 @@ const HotelsPage: React.FC = () => {
 
           {/* Check-out */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Check-out
+            </label>
             <DatePicker
               selected={checkOutDate}
               onChange={(date) => setCheckOutDate(date)}
@@ -125,14 +133,18 @@ const HotelsPage: React.FC = () => {
 
           {/* Nombre de voyageurs */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">No d'invités</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              No d'invités
+            </label>
             <select
               className="w-full p-3 border border-gray-300 rounded-lg"
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
             >
-              {[1, 2, 3, 4].map(num => (
-                <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
+              {[1, 2, 3, 4].map((num) => (
+                <option key={num} value={num}>
+                  {num} {num === 1 ? "invité" : "invités"}
+                </option>
               ))}
             </select>
           </div>
@@ -140,7 +152,7 @@ const HotelsPage: React.FC = () => {
           {/* Bouton de recherche */}
           <div className="flex items-end">
             <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg">
-              SEARCH
+              RECHERCHER
             </button>
           </div>
         </div>
@@ -166,7 +178,7 @@ const HotelsPage: React.FC = () => {
 
           <div className="mb-6">
             <h4 className="font-semibold mb-2">Star ratings</h4>
-            {[5, 4, 3].map(rating => (
+            {[5, 4, 3].map((rating) => (
               <div key={rating} className="flex items-center mb-2">
                 <input
                   type="checkbox"
@@ -182,7 +194,7 @@ const HotelsPage: React.FC = () => {
 
           <div>
             <h4 className="font-semibold mb-2">Property type</h4>
-            {['Hotel', 'Apartment', 'Villa'].map(type => (
+            {["Hotel", "Apartment", "Villa"].map((type) => (
               <div key={type} className="flex items-center mb-2">
                 <input
                   type="checkbox"
@@ -199,28 +211,31 @@ const HotelsPage: React.FC = () => {
 
         {/* Liste des hôtels */}
         <div className="w-full md:w-3/4 space-y-6">
-          {filteredHotels.map(hotel => (
-            <Link 
-              to={`/hotels/${hotel.id}`} 
+          {filteredHotels.map((hotel) => (
+            <Link
+              to={`/hotels/${hotel.id}`}
               key={hotel.id}
               className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
             >
               <div className="flex flex-col md:flex-row">
                 <div className="md:w-1/3">
-                  <img 
-                    src={hotel.image} 
+                  <img
+                    src={hotel.image}
                     alt={hotel.name}
                     className="w-full h-48 object-cover"
                   />
                 </div>
                 <div className="p-6 md:w-2/3">
                   <h3 className="text-xl font-bold">{hotel.name}</h3>
-                  <p className="text-gray-600 mt-1">{hotel.location} | {hotel.distance}</p>
-                  
+                  <p className="text-gray-600 mt-1">
+                    {hotel.location} | {hotel.distance}
+                  </p>
+
                   <div className="mt-3 space-y-1">
                     {hotel.features.map((feature, index) => (
                       <div key={index} className="flex items-center">
-                        <span className="text-green-500 mr-2">✔</span>https://source.unsplash.com/random/400x300/?marriott
+                        <span className="text-green-500 mr-2">✔</span>
+                        https://source.unsplash.com/random/400x300/?marriott
                         <span>{feature}</span>
                       </div>
                     ))}
@@ -228,8 +243,12 @@ const HotelsPage: React.FC = () => {
 
                   <div className="mt-4 flex justify-between items-center">
                     <div className="flex items-center">
-                      <span className="text-yellow-400">{"★".repeat(hotel.rating)}</span>
-                      <span className="text-gray-500 ml-2">{hotel.rating}/5</span>
+                      <span className="text-yellow-400">
+                        {"★".repeat(hotel.rating)}
+                      </span>
+                      <span className="text-gray-500 ml-2">
+                        {hotel.rating}/5
+                      </span>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold">{hotel.price}</p>
@@ -249,4 +268,4 @@ const HotelsPage: React.FC = () => {
   );
 };
 
-export default HotelsPage;
+export default HotelsPage

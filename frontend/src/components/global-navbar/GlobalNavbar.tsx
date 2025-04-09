@@ -16,7 +16,8 @@ const GlobalNavbar: React.FC = () => {
             <NavLink to="/" text="HOME" />
             <NavLink to="/hotel-filter" text="HOTELS" />
             <NavLink to="/about-us" text="A PROPOS" />
-            <NavLink to="/login" text="SE CONNECTER/S'INSCRIRE" />
+            <NavLink to="/login" text="SE CONNECTER" />
+            <NavLink to="/register" text="S'INSCRIRE" />
           </div>
 
           {/* Menu mobile (icône hamburger) */}
